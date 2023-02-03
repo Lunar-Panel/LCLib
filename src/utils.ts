@@ -1,3 +1,4 @@
+import { parseUUID } from '@minecraft-js/uuid';
 import { constants, createHash, publicEncrypt, randomBytes } from 'crypto';
 import fetch from 'node-fetch';
 import { WebSocket } from 'ws';
@@ -11,8 +12,8 @@ import { MCAccount } from './Types';
  * @returns The One-Time-Use Lunar Client Access Token
  */
 export function lunarAuth(access_token: string, username: string, uuid: string): Promise<string> {
-	const uuidWithoutDashes = uuid.replace(/-/g, '');
-	const uuidWithDashes = uuidWithoutDashes.slice(0, 8) + '-' + uuidWithoutDashes.slice(8, 12) + '-' + uuidWithoutDashes.slice(12, 16) + '-' + uuidWithoutDashes.slice(16, 20) + '-' + uuidWithoutDashes.slice(20, 32);
+	const uuidWithoutDashes = parseUUIDWithoutDashes(uuid);
+	const uuidWithDashes = parseUUIDWithDashes(uuid);
 	return new Promise((res, rej) => {
 		const socket = new WebSocket('wss://authenticator.lunarclientprod.com/', {
 			headers: {
@@ -163,4 +164,53 @@ export async function loginToMinecraft(access_token: string): Promise<MCAccount>
 	}).then(res => res.json())) as any;
 
 	return { username, uuid, token };
+}
+
+export const parseUUIDWithDashes = (uuid: string) => parseUUID(uuid).toString(true);
+export const parseUUIDWithoutDashes = (uuid: string) => parseUUID(uuid).toString(false);
+
+/**
+ * Parses time to human-readable string
+ * @param milliseconds The time in milliseconds
+ * @param excludeMS Whether to exclude the leftover milliseconds from the final result (only excludes if there was at least 1 second)
+ * @returns The human-readable string
+ */
+export function parseTime(milliseconds: number, excludeMS = false) {
+	if (typeof milliseconds !== 'number') milliseconds = 0;
+
+	const data = {
+		days: Math.trunc(milliseconds / 86_400_000),
+		hours: Math.trunc(milliseconds / 3_600_000) % 24,
+		minutes: Math.trunc(milliseconds / 60_000) % 60,
+		seconds: Math.trunc(milliseconds / 1_000) % 60,
+		milliseconds: Math.trunc(milliseconds) % 1_000
+	};
+
+	let timeItems = [];
+	for (const item of Object.keys(data)) {
+		if (timeItems.length || data[item] !== 0) {
+			const formattedName = item.substring(0, 1).toUpperCase() + item.substring(1).toLowerCase();
+			timeItems.push(data[item] + ' ' + formattedName.substring(0, formattedName.length - (data[item].toString()[data[item].toString().length - 1] == '1' ? 1 : 0)));
+		}
+	}
+
+	if (excludeMS && timeItems.length > 1)
+		timeItems.splice(
+			timeItems.findIndex(i => i.includes('Milliseconds')),
+			1
+		);
+
+	let time: string;
+	if (timeItems.length === 1) time = timeItems[0];
+	else if (timeItems.length === 2) time = timeItems[0] + ' and ' + timeItems[1];
+	else {
+		time = '';
+		for (const item of timeItems) {
+			if (timeItems.indexOf(item) === timeItems.length - 1) time += ', and ' + item;
+			else if (timeItems.indexOf(item) === 0) time = item;
+			else time += ', ' + item;
+		}
+	}
+
+	return time;
 }

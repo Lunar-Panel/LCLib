@@ -34,7 +34,7 @@ import UpdateVisiblePlayersPacket from './UpdateVisiblePlayersPacket';
 export type ArrayElement<ArrayType extends readonly unknown[]> = ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
 
 /** From Server */
-export const IncomingPackets = [GiveEmotesPacket, PlayEmotePacket, NotificationPacket, PlayerInfoPacket, FriendListPacket, FriendMessagePacket, PendingRequestsPacket, FriendRequestPacket, FriendResponsePacket, ForceCrashPacket, TaskListRequestPacket, HostListRequestPacket, ClientBanPacket, FriendUpdatePacket, JoinServerPacket, ReceiveFriendRequestPacket, ChatMessagePacket];
+export const IncomingPackets = [ConsoleMessagePacket, NotificationPacket, FriendListPacket, FriendMessagePacket, JoinServerPacket, PendingRequestsPacket, PlayerInfoPacket, FriendRequestPacket, ReceiveFriendRequestPacket, RemoveFriendPacket, FriendUpdatePacket, FriendResponsePacket, ForceCrashPacket, TaskListRequestPacket, PlayEmotePacket, GiveEmotesPacket, ChatMessagePacket, HostListRequestPacket];
 
 export type IncomingPacketTypes = {
 	[key in ArrayElement<typeof IncomingPackets>['id']]: Extract<
@@ -61,10 +61,51 @@ export type OutgoingPacketTypes = {
 		: never;
 };
 
-export function writePacket(id: number, data: any): Packet | void {
+export enum IncomingPacketIDs {
+	ConsoleMessage = 2,
+	Notification = 3,
+	FriendList = 4,
+	FriendMessage = 5,
+	JoinServer = 6,
+	PendingRequests = 7,
+	PlayerInfo = 8,
+	FriendRequest = 9,
+	ReceiveFriendRequest = 16,
+	RemoveFriend = 17,
+	FriendUpdate = 18,
+	FriendResponse = 21,
+	ForceCrash = 33,
+	TaskListRequest = 35,
+	PlayEmote = 51,
+	GiveEmotes = 57,
+	ChatMessage = 65,
+	HostListRequest = 67
+	// ClientBan = 1056
+}
+
+export enum OutgoingPacketIDs {
+	ConsoleMessage = 2,
+	FriendMessage = 5,
+	JoinServer = 6,
+	FriendRequest = 9,
+	RemoveFriend = 17,
+	// ApplyCosmetics = 20,
+	FriendResponse = 21,
+	ToggleFriendRequests = 22,
+	// ConstantChanged = 24,
+	TaskList = 36,
+	// DoEmote = 39,
+	PlayerInfoRequest = 48,
+	// UpdateVisiblePlayers = 50,
+	// EquipEmotes = 56,
+	KeepAlive = 64,
+	HostList = 68
+}
+
+export function writePacket(id: number, data: any = {}): Packet | void {
 	const Packet = OutgoingPackets.find(p => p.id == id);
 
-	if (!Packet) return console.error(`No Packet Found While Writing, ID ${id}, Data`, data);
+	if (!Packet) throw new Error(`No Packet Found While Writing, ID ${id}`);
 
 	const packet = new Packet();
 	packet.write(data);
@@ -72,16 +113,16 @@ export function writePacket(id: number, data: any): Packet | void {
 	return packet;
 }
 
-export function readPacket(data: Buffer): Packet | void {
+export function readPacket(data: Buffer): { id: number; data: Packet } | void {
 	const buf = new BufWrapper(data);
 
 	const id = buf.readVarInt();
 	const Packet = IncomingPackets.find(p => p.id == id);
 
-	if (!Packet) return console.error(`No Packet Found While Reading, ID ${id}, Data`, data);
+	if (!Packet) throw new Error(`No Packet Found While Reading, ID ${id}`);
 
 	const packet = new Packet(buf);
 	packet.read();
 
-	return packet;
+	return { id: Packet.id, data: packet };
 }

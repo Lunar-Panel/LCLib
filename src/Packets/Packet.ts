@@ -1,6 +1,8 @@
 import { BufWrapper } from '@minecraft-js/bufwrapper';
 
 export default class Packet<T = any> {
+	public static readonly id: number;
+
 	public buf: BufWrapper;
 	public data: T;
 
