@@ -1,4 +1,4 @@
-# **LCLib**
+# [**LCLib**](https://github.com/TBHGodPro/LCLib)
 
 A library to access the Lunar Client Assets WebSocket easily and quickly, comes with:
 
