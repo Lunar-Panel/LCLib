@@ -284,6 +284,6 @@ Good luck on your journey exploring the Lunar Client Backend, and I hope you don
 
 Credits:
 
-- [LunarSocket](https://github.com/Solar-Tweaks/LunarSocket) for the Packet declarations and reading/writing, although I did change a lot with my findings
+- [LunarSocket by Solar Tweaks](https://github.com/Solar-Tweaks/LunarSocket) for the Packet declarations and reading/writing, although I did change a lot with my findings
 - [MinecraftJS](https://github.com/MinecraftJS) for the UUID and BufWrapper Packages which really helped in development and made it MUCH easier
 - [Leoo](https://github.com/heyitsleo) for helping out a lot during the testing phase and keeping me mentally sane (at least somewhat)
