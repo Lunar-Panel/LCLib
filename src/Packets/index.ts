@@ -19,7 +19,7 @@ import KeepAlivePacket from './KeepAlivePacket';
 import NotificationPacket from './NotificationPacket';
 import Packet from './Packet';
 import PacketId71 from './PacketId71';
-import PacketId73 from './PacketId73';
+import UpdatePlusColorsPacket from './UpdatePlusColors';
 import PendingRequestsPacket from './PendingRequestsPacket';
 import PlayEmotePacket from './PlayEmotePacket';
 import PlayerInfoPacket from './PlayerInfoPacket';
@@ -34,7 +34,7 @@ import UpdateVisiblePlayersPacket from './UpdateVisiblePlayersPacket';
 export type ArrayElement<ArrayType extends readonly unknown[]> = ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
 
 /** From Server */
-export const IncomingPackets = [ConsoleMessagePacket, NotificationPacket, FriendListPacket, FriendMessagePacket, JoinServerPacket, PendingRequestsPacket, PlayerInfoPacket, FriendRequestPacket, ReceiveFriendRequestPacket, RemoveFriendPacket, FriendUpdatePacket, FriendResponsePacket, ForceCrashPacket, TaskListRequestPacket, PlayEmotePacket, GiveEmotesPacket, ChatMessagePacket, HostListRequestPacket];
+export const IncomingPackets = [ConsoleMessagePacket, NotificationPacket, FriendListPacket, FriendMessagePacket, JoinServerPacket, PendingRequestsPacket, PlayerInfoPacket, FriendRequestPacket, ReceiveFriendRequestPacket, RemoveFriendPacket, FriendUpdatePacket, FriendResponsePacket, ForceCrashPacket, TaskListRequestPacket, PlayEmotePacket, GiveEmotesPacket, ChatMessagePacket, HostListRequestPacket, UpdatePlusColorsPacket];
 
 export type IncomingPacketTypes = {
 	[key in ArrayElement<typeof IncomingPackets>['id']]: Extract<
@@ -48,7 +48,7 @@ export type IncomingPacketTypes = {
 };
 
 /** To Server */
-export const OutgoingPackets = [DoEmotePacket, ConsoleMessagePacket, JoinServerPacket, EquipEmotesPacket, ApplyCosmeticsPacket, PlayerInfoRequestPacket, FriendMessagePacket, FriendRequestPacket, FriendResponsePacket, KeepAlivePacket, TaskListPacket, HostListPacket, RemoveFriendPacket, ToggleFriendRequestsPacket, UpdateVisiblePlayersPacket, PacketId71, PacketId73];
+export const OutgoingPackets = [DoEmotePacket, ConsoleMessagePacket, JoinServerPacket, EquipEmotesPacket, ApplyCosmeticsPacket, PlayerInfoRequestPacket, FriendMessagePacket, FriendRequestPacket, FriendResponsePacket, KeepAlivePacket, TaskListPacket, HostListPacket, RemoveFriendPacket, ToggleFriendRequestsPacket, UpdateVisiblePlayersPacket, PacketId71];
 
 export type OutgoingPacketTypes = {
 	[key in ArrayElement<typeof OutgoingPackets>['id']]: Extract<
@@ -80,6 +80,7 @@ export enum IncomingPacketIDs {
 	GiveEmotes = 57,
 	ChatMessage = 65,
 	HostListRequest = 67
+	// UpdatePlusColors = 73
 	// ClientBan = 1056
 }
 

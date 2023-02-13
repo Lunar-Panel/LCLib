@@ -157,11 +157,11 @@ export async function loginToMinecraft(access_token: string): Promise<MCAccount>
 		} while (!res.ok);
 		return await res.json();
 	})();
-	const { name: username, id: uuid } = (await fetch('https://api.minecraftservices.com/minecraft/profile', {
+	const { name: username, id: uuid } = await fetch('https://api.minecraftservices.com/minecraft/profile', {
 		headers: {
 			Authorization: `${token_type} ${token}`
 		}
-	}).then(res => res.json())) as any;
+	}).then(res => res.json());
 
 	return { username, uuid, token };
 }

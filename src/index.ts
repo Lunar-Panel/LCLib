@@ -1,5 +1,3 @@
-export { Client } from './Client';
-export { Logger } from './Logger';
+export * from './Client';
 export * from './Types';
 export * from './utils';
-

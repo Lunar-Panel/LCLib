@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 
 /** Client Logger */
-export class Logger {
+export default class Logger {
 	/** Whether the Logger is enabled */
 	public readonly enabled: boolean = false;
 

@@ -3,7 +3,7 @@ import TypedEmitter from 'typed-emitter';
 import { WebSocket } from 'ws';
 import ClientConsole from './Classes/ClientConsole';
 import { handle } from './handle';
-import { Logger } from './Logger';
+import Logger from './Classes/Logger';
 import { IncomingPacketTypes, OutgoingPacketIDs, OutgoingPacketTypes, readPacket, writePacket } from './Packets';
 import Packet from './Packets/Packet';
 import { ClientOptions, ClientState, FriendRequest, LCUser, MCAccount, OfflineUser, OnlineUser, User, UserState } from './Types';

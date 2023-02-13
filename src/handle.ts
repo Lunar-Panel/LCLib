@@ -35,7 +35,7 @@ export async function handle<T extends keyof IncomingPacketTypes>(client: Client
 				client.friends.set(rawUser.uuid, player);
 				client.emit('playerUpdate', player);
 			}
-			client.clientConsole.setEnabled(data.consoleAccess ?? false);
+			client.clientConsole._setEnabled(data.consoleAccess ?? false);
 			client.friendRequestsEnabled = data.requestsEnabled;
 			break;
 		case IncomingPacketIDs.FriendUpdate:
