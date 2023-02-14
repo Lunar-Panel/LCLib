@@ -18,7 +18,23 @@ jobs:
         run: npm install
       - name: Build code
         run: npm run build
-      - name: Publish Package
-        run: npm publish
+      - name: Changelog
+        uses: scottbrenner/generate-changelog-action@master
+        id: Changelog
         env:
-          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+          REPO: ${{ github.repository }}
+      - name: Create Release
+        uses: actions/create-release@latest
+        env:
+          GTITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Version ${{ github.ref }}
+          body: |
+            ${{ steps.Changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+      - name: Publish Package
+        run: npm publis
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.npm_token }}
