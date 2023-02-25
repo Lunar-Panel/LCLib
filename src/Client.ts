@@ -79,21 +79,24 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 	/**
 	 * Intiate and Login to the Client
 	 * @param access_token The Microsoft Access Token
+	 * @param minecraft_authed Whether the provided Access Token has already been authenticated with Minecraft
 	 */
-	public async init(access_token: string) {
+	public async init(access_token: string, minecraft_authed = false) {
 		if (this.state != ClientState.REQUIRES_INIT) return;
-		this.logger.log('Logging In...');
-		try {
-			const minecraftAuthTimeStart = Date.now();
-			this.account = await loginToMinecraft(access_token);
-			this.state = ClientState.INITIATED;
-			this.logger.log('Successfully Logged In');
-			this.logger.debug('Minecraft Auth took ' + parseTime(Date.now() - minecraftAuthTimeStart));
-		} catch {
-			this.emit('disconnected');
-			this.state = ClientState.REQUIRES_INIT;
-			this.logger.error('Failed to Log In');
+		if (!minecraft_authed) {
+			this.logger.log('Logging In...');
+			try {
+				const minecraftAuthTimeStart = Date.now();
+				this.account = await loginToMinecraft(access_token);
+				this.logger.debug('Minecraft Auth took ' + parseTime(Date.now() - minecraftAuthTimeStart));
+			} catch {
+				this.emit('disconnected');
+				this.state = ClientState.REQUIRES_INIT;
+				this.logger.error('Failed to Log In');
+			}
 		}
+		this.state = ClientState.INITIATED;
+		this.logger.log('Successfully Logged In');
 	}
 
 	/**
