@@ -1,6 +1,6 @@
 {
 	"name": "lc-lib",
-	"version": "1.0.7",
+	"version": "1.0.8",
 	"description": "Library to access Lunar Client's Asset WebSocket easily",
 	"main": "dist/index.js",
 	"scripts": {
