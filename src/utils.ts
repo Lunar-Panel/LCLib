@@ -141,7 +141,7 @@ export async function loginToMinecraft(access_token: string): Promise<MCAccount>
 		})
 	}).then(res => res.json());
 
-	const { access_token: token, token_type } = await (async () => {
+	const { access_token: token } = await (async () => {
 		let res;
 		do {
 			res = await fetch('https://api.minecraftservices.com/authentication/login_with_xbox', {
@@ -157,13 +157,8 @@ export async function loginToMinecraft(access_token: string): Promise<MCAccount>
 		} while (!res.ok);
 		return await res.json();
 	})();
-	const { name: username, id: uuid } = await fetch('https://api.minecraftservices.com/minecraft/profile', {
-		headers: {
-			Authorization: `${token_type} ${token}`
-		}
-	}).then(res => res.json());
 
-	return { username, uuid, token };
+	return await fetchUserInfo(token);
 }
 
 export const parseUUIDWithDashes = (uuid: string) => parseUUID(uuid).toString(true);
@@ -213,4 +208,22 @@ export function parseTime(milliseconds: number, excludeMS = false) {
 	}
 
 	return time;
+}
+
+/**
+ * Fetch info about a User's Account
+ * @param token The User's Mojang Access Token
+ * @returns The User Profile
+ */
+export async function fetchUserInfo(token: string): Promise<MCAccount> {
+	const { name: username, id: uuid } = await fetch('https://api.minecraftservices.com/minecraft/profile', {
+		headers: {
+			Authorization: `Bearer ${token}`
+		}
+	}).then(res => res.json());
+	return {
+		username,
+		uuid,
+		token
+	};
 }

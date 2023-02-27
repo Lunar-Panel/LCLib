@@ -7,7 +7,7 @@ import Logger from './Classes/Logger';
 import { IncomingPacketTypes, OutgoingPacketIDs, OutgoingPacketTypes, readPacket, writePacket } from './Packets';
 import Packet from './Packets/Packet';
 import { ClientOptions, ClientState, FriendRequest, LCUser, MCAccount, OfflineUser, OnlineUser, User, UserState } from './Types';
-import { loginToMinecraft, lunarAuth, parseTime, parseUUIDWithDashes, parseUUIDWithoutDashes } from './utils';
+import { fetchUserInfo, loginToMinecraft, lunarAuth, parseTime, parseUUIDWithDashes, parseUUIDWithoutDashes } from './utils';
 import fetch from 'node-fetch';
 
 /** The LCLib Client */
@@ -83,7 +83,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 	 */
 	public async init(access_token: string, minecraft_authed = false) {
 		if (this.state != ClientState.REQUIRES_INIT) return;
-		if (!minecraft_authed) {
+		if (minecraft_authed) this.account = await fetchUserInfo(access_token);
+		else {
 			this.logger.log('Logging In...');
 			try {
 				const minecraftAuthTimeStart = Date.now();
