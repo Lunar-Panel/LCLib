@@ -65,6 +65,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 	/** Whether Incoming Friend Requests are enabled for the Client User */
 	public friendRequestsEnabled: boolean;
 
+	// Internally used
+	private manuallyDisconnected = false;
+
 	/**
 	 * The LCLib Client
 	 */
@@ -187,10 +190,16 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 		});
 
 		this.socket.on('close', (code, reason) => {
-			this.logger.log(`Disconnected with Code ${code} and Reason "${reason ?? 'No Reason Given'}" ${onlineSince ? `after ${parseTime(Date.now() - onlineSince, true)}` : 'instantly'}`);
 			clearInterval(heartbeatInterval);
-			this.state = ClientState.CONNECTING;
-			this._connect();
+			if (this.manuallyDisconnected) {
+				this.manuallyDisconnected = false;
+				this.logger.log('Disconnected Manually');
+				this.state = ClientState.INITIATED;
+			} else {
+				this.logger.log(`Disconnected with Code ${code} and Reason "${reason ?? 'No Reason Given'}" ${onlineSince ? `after ${parseTime(Date.now() - onlineSince, true)}` : 'instantly'}`);
+				this.state = ClientState.CONNECTING;
+				this._connect();
+			}
 		});
 
 		this.socket.on('error', err => {
@@ -472,6 +481,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 			})
 		);
 		return users;
+	}
+
+	/**
+	 * Disconnect the Client immediately
+	 */
+	public disconnect() {
+		this.manuallyDisconnected = true;
+		this.socket.close();
 	}
 }
 
