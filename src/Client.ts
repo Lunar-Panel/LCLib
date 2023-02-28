@@ -488,7 +488,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 	 */
 	public disconnect() {
 		this.manuallyDisconnected = true;
-		this.socket.close();
+		if (this.socket?.readyState === WebSocket.OPEN) this.socket.close();
 	}
 }
 
