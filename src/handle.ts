@@ -163,7 +163,7 @@ export async function handle<T extends keyof IncomingPacketTypes>(client: Client
 					uuid: request.uuid,
 					username:
 						request.username ||
-						(await fetch(`https://sessionserver.mojang.com/session/minecraft/profile/${data.uuid}`)
+						(await fetch(`https://sessionserver.mojang.com/session/minecraft/profile/${request.uuid}`)
 							.then(res => res.json())
 							.then(info => info.name)),
 					outgoing: false

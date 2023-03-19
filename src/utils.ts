@@ -1,7 +1,6 @@
 import { parseUUID } from '@minecraft-js/uuid';
 import { constants, createHash, publicEncrypt, randomBytes } from 'crypto';
-import fetch from 'node-fetch';
-import { WebSocket } from 'ws';
+import { Client } from './Client';
 import { MCAccount } from './Types';
 
 /**
@@ -11,7 +10,7 @@ import { MCAccount } from './Types';
  * @param uuid The Minecraft Account UUID (with or without dashes)
  * @returns The One-Time-Use Lunar Client Access Token
  */
-export function lunarAuth(access_token: string, username: string, uuid: string): Promise<string> {
+export function lunarAuth(access_token: string, username: string, uuid: string, { WebSocket, fetch }: Client): Promise<string> {
 	const uuidWithoutDashes = parseUUIDWithoutDashes(uuid);
 	const uuidWithDashes = parseUUIDWithDashes(uuid);
 	return new Promise((res, rej) => {
@@ -61,6 +60,29 @@ export function lunarAuth(access_token: string, username: string, uuid: string):
 			);
 		}
 
+		function padString(input: string): string {
+			let segmentLength = 4;
+			let stringLength = input.length;
+			let diff = stringLength % segmentLength;
+
+			if (!diff) {
+				return input;
+			}
+
+			let position = stringLength;
+			let padLength = segmentLength - diff;
+			let paddedStringLength = stringLength + padLength;
+			let buffer = Buffer.alloc(paddedStringLength);
+
+			buffer.write(input);
+
+			while (padLength--) {
+				buffer.write('=', position++);
+			}
+
+			return buffer.toString();
+		}
+
 		socket.on('message', async event => {
 			let data = null;
 			try {
@@ -80,15 +102,21 @@ export function lunarAuth(access_token: string, username: string, uuid: string):
 						body: JSON.stringify({
 							accessToken: access_token,
 							selectedProfile: uuidWithoutDashes,
-							serverId: mcHexDigest(createHash('sha1').update('').update(secret).update(Buffer.from(data.publicKey, 'base64url')).digest())
+							serverId: mcHexDigest(
+								createHash('sha1')
+									.update('')
+									.update(secret)
+									.update(Buffer.from(padString(data.publicKey).replace(/\-/g, '+').replace(/_/g, '/'), 'base64'))
+									.digest()
+							)
 						})
 					});
 					socket.send(
 						Buffer.from(
 							JSON.stringify({
 								packetType: 'CPacketEncryptionResponse',
-								secretKey: encrypt(secret, data.publicKey).toString('base64url'),
-								publicKey: encrypt(Buffer.from(data.randomBytes, 'base64'), data.publicKey).toString('base64url')
+								secretKey: encrypt(secret, data.publicKey).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_'),
+								publicKey: encrypt(Buffer.from(data.randomBytes, 'base64'), data.publicKey).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
 							}),
 							'utf-8'
 						)
@@ -108,7 +136,8 @@ export function lunarAuth(access_token: string, username: string, uuid: string):
  * @param access_token The Microsoft Access Token
  * @returns The Minecraft Account Data (Username, UUID, and Access Token)
  */
-export async function loginToMinecraft(access_token: string): Promise<MCAccount> {
+export async function loginToMinecraft(access_token: string, client: Client): Promise<MCAccount> {
+	const { fetch } = client;
 	const fetch1: any = await fetch('https://user.auth.xboxlive.com/user/authenticate', {
 		method: 'POST',
 		headers: {
@@ -158,7 +187,7 @@ export async function loginToMinecraft(access_token: string): Promise<MCAccount>
 		return await res.json();
 	})();
 
-	return await fetchUserInfo(token);
+	return await fetchUserInfo(token, client);
 }
 
 export const parseUUIDWithDashes = (uuid: string) => parseUUID(uuid).toString(true);
@@ -185,7 +214,7 @@ export function parseTime(milliseconds: number, excludeMS = false) {
 	for (const item of Object.keys(data)) {
 		if (timeItems.length || data[item] !== 0) {
 			const formattedName = item.substring(0, 1).toUpperCase() + item.substring(1).toLowerCase();
-			timeItems.push(data[item] + ' ' + formattedName.substring(0, formattedName.length - (data[item].toString()[data[item].toString().length - 1] == '1' ? 1 : 0)));
+			timeItems.push(data[item] + ' ' + formattedName.substring(0, formattedName.length - (data[item] == 1 ? 1 : 0)));
 		}
 	}
 
@@ -215,7 +244,7 @@ export function parseTime(milliseconds: number, excludeMS = false) {
  * @param token The User's Mojang Access Token
  * @returns The User Profile
  */
-export async function fetchUserInfo(token: string): Promise<MCAccount> {
+export async function fetchUserInfo(token: string, { fetch }: Client): Promise<MCAccount> {
 	const { name: username, id: uuid } = await fetch('https://api.minecraftservices.com/minecraft/profile', {
 		headers: {
 			Authorization: `Bearer ${token}`

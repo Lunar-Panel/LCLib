@@ -1,3 +1,6 @@
+import fetch from 'node-fetch';
+import { WebSocket } from 'ws';
+
 /** Data for a Minecraft Account */
 export interface MCAccount {
 	token: string;
@@ -72,6 +75,19 @@ export interface UserState {
 export interface ClientOptions {
 	/** Whether to enable built-in debug logging */
 	debug: boolean;
+
+	/**
+	 * A replacement for the WebSocket used, must allow sending headers and buffers and have properties such as readyStates
+	 *
+	 * MUST HAVE THE SAME FORMAT AS NPM PACKAGE `ws`
+	 */
+	WebSocket: any;
+	/**
+	 * A replacement for the fetch used, must allow sending headers + body and recieving responses
+	 *
+	 * MUST HAVE THE SAME FORMAT AS NPM PACKAGE `node-fetch`
+	 */
+	fetch: any;
 }
 
 /** An Offline User */

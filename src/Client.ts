@@ -1,6 +1,6 @@
 import EventEmitter, { once } from 'events';
 import TypedEmitter from 'typed-emitter';
-import { WebSocket } from 'ws';
+import backupWebSocket from 'ws/index';
 import ClientConsole from './Classes/ClientConsole';
 import { handle } from './handle';
 import Logger from './Classes/Logger';
@@ -8,10 +8,14 @@ import { IncomingPacketTypes, OutgoingPacketIDs, OutgoingPacketTypes, readPacket
 import Packet from './Packets/Packet';
 import { ClientOptions, ClientState, FriendRequest, LCUser, MCAccount, OfflineUser, OnlineUser, User, UserState } from './Types';
 import { fetchUserInfo, loginToMinecraft, lunarAuth, parseTime, parseUUIDWithDashes, parseUUIDWithoutDashes } from './utils';
-import fetch from 'node-fetch';
+import backupFetch from 'node-fetch';
 
 /** The LCLib Client */
 export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents>) {
+	// Options
+	public WebSocket: typeof backupWebSocket;
+	public fetch: typeof backupFetch;
+
 	// Client State Info
 
 	/** The State of the Client */
@@ -36,7 +40,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 	public userState: UserState;
 
 	/** The currently active WebSocket */
-	public socket: WebSocket;
+	public socket: backupWebSocket;
 
 	/** Whether the Client has sent the `connected` event */
 	public sentConnected: boolean = false;
@@ -77,6 +81,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 		this.logger = new Logger(options.debug ?? false);
 		this.state = ClientState.REQUIRES_INIT;
 		this.clientConsole = new ClientConsole(this);
+
+		this.WebSocket = options.WebSocket ?? backupWebSocket;
+		this.fetch = options.fetch ?? backupFetch;
 	}
 
 	/**
@@ -86,18 +93,23 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 	 */
 	public async init(access_token: string, minecraft_authed = false) {
 		if (this.state != ClientState.REQUIRES_INIT) return;
-		if (minecraft_authed) this.account = await fetchUserInfo(access_token);
-		else {
-			this.logger.log('Logging In...');
-			try {
-				const minecraftAuthTimeStart = Date.now();
-				this.account = await loginToMinecraft(access_token);
-				this.logger.debug('Minecraft Auth took ' + parseTime(Date.now() - minecraftAuthTimeStart));
-			} catch {
-				this.emit('disconnected');
-				this.state = ClientState.REQUIRES_INIT;
-				this.logger.error('Failed to Log In');
+		try {
+			if (minecraft_authed) this.account = await fetchUserInfo(access_token, this);
+			else {
+				this.logger.log('Logging In...');
+				try {
+					const minecraftAuthTimeStart = Date.now();
+					this.account = await loginToMinecraft(access_token, this);
+					this.logger.debug('Minecraft Auth took ' + parseTime(Date.now() - minecraftAuthTimeStart));
+				} catch {
+					this.emit('disconnected');
+					this.state = ClientState.REQUIRES_INIT;
+					this.logger.error('Failed to Log In');
+				}
 			}
+		} catch (err) {
+			this.logger.error('An error was encountered during the initiation process', err);
+			return this.emit('invalid');
 		}
 		this.state = ClientState.INITIATED;
 		this.logger.log('Successfully Logged In');
@@ -107,7 +119,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 	 * Connect to the WebSocket (with auto reconnecter)
 	 * @param state User State for the Connection
 	 */
-	public connect(state: Partial<UserState> = {}) {
+	public async connect(state: Partial<UserState> = {}) {
 		if (this.state != ClientState.INITIATED) return;
 		this.logger.log('Starting Connect Sequence');
 		this.sentConnected = false;
@@ -140,6 +152,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 		this.userState = state as UserState;
 
 		this._connect();
+
+		return await once(this, 'connected');
 	}
 
 	private async _connect() {
@@ -151,7 +165,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 		let lunarToken: string;
 		try {
 			const lunarAuthTimeStart = Date.now();
-			lunarToken = await lunarAuth(this.account.token, this.account.username, this.uuidWithDashes);
+			lunarToken = await lunarAuth(this.account.token, this.account.username, this.uuidWithDashes, this);
 			this.logger.debug('Lunar Auth took ' + parseTime(Date.now() - lunarAuthTimeStart));
 			this.failedAttempts = 0;
 		} catch (err) {
@@ -166,7 +180,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 			}
 		}
 
-		this.socket = new WebSocket('wss://assetserver.lunarclientprod.com/connect/', {
+		this.socket = new this.WebSocket('wss://assetserver.lunarclientprod.com/connect/', {
 			headers: { ...this.userState, Authorization: lunarToken }
 		});
 		let heartbeatInterval: NodeJS.Timer;
@@ -176,10 +190,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 			this.logger.log('Connected!');
 			onlineSince = Date.now();
 			this.state = ClientState.CONNECTED;
-			if (!this.sentConnected) {
-				this.sentConnected = true;
-				setTimeout(() => this.emit('connected'), 3000);
-			}
 			heartbeatInterval = setInterval(() => {
 				if (heartbeatInterval)
 					this.sendImpersistent(OutgoingPacketIDs.KeepAlive, {
@@ -187,6 +197,11 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 						game: ''
 					});
 			}, 30000);
+			this.emit('open');
+			if (!this.sentConnected) {
+				this.sentConnected = true;
+				this.emit('connected');
+			}
 		});
 
 		this.socket.on('close', (code, reason) => {
@@ -232,10 +247,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 	 * @param data Packet Data
 	 */
 	public async sendPersistent<T extends keyof OutgoingPacketTypes>(id: T, data: OutgoingPacketTypes[T]) {
-		if (this.socket?.readyState !== WebSocket.OPEN) {
-			if (this.sentConnected) await once(this.socket, 'open');
-			else await once(this, 'connected');
-		}
+		if (this.socket?.readyState !== WebSocket.OPEN) await once(this, 'open');
 		return await this.send(id, data)
 			.then(() => true)
 			.catch(() => false);
@@ -399,14 +411,15 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 	 * @returns Whether the toggle succeded
 	 */
 	public async toggleFriendRequests(enabled: boolean) {
+		const isEnabled = enabled ? !!enabled : !this.friendRequestsEnabled;
 		if (
 			!(await this.sendPersistent(OutgoingPacketIDs.ToggleFriendRequests, {
-				status: enabled ?? true
+				status: isEnabled
 			}))
 		)
 			return false;
 		else {
-			this.friendRequestsEnabled = !!(enabled ?? true);
+			this.friendRequestsEnabled = isEnabled;
 			return true;
 		}
 	}
@@ -484,18 +497,36 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 	}
 
 	/**
-	 * Disconnect the Client immediately
+	 * Disconnect the Client from the WebSocket
 	 */
 	public disconnect() {
 		this.manuallyDisconnected = true;
 		if (this.socket?.readyState === WebSocket.OPEN) this.socket.close();
 	}
+
+	/**
+	 * Destroy the Client and all it's data
+	 */
+	public destroy() {
+		this.disconnect();
+		this.state = ClientState.REQUIRES_INIT;
+		delete this.account;
+		this._users = new Map();
+		this.friends = new Map();
+		this.friendRequests = new Map();
+		delete this.clientConsole;
+		delete this.emotes;
+		delete this.friendRequestsEnabled;
+		this.manuallyDisconnected = false;
+	}
 }
 
 /** Events a Client can Emit */
 export type ClientEvents = {
-	/** The Client is connected */
+	/** The Client is connected (sent once) */
 	connected(): void;
+	/** The Client is connected (sent every connection) */
+	open(): void;
 	/** The Client has been logged into with an invalid access token and requires the `init()` method to be run again to re-login */
 	invalid(): void;
 	/** The Client has been manually disconnected and requires the `connect()` method to be run again to reconnect */

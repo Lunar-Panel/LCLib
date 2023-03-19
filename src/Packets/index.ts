@@ -80,7 +80,7 @@ export enum IncomingPacketIDs {
 	GiveEmotes = 57,
 	ChatMessage = 65,
 	HostListRequest = 67
-	// UpdatePlusColors = 73
+	// UpdatePlusColors = 73,
 	// ClientBan = 1056
 }
 
