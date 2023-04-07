@@ -1,8 +1,8 @@
 import { Client } from "./Client";
 import {
-	IncomingPacketIDs,
-	IncomingPacketTypes,
-	OutgoingPacketIDs,
+  IncomingPacketIDs,
+  IncomingPacketTypes,
+  OutgoingPacketIDs,
 } from "./Packets";
 import { FriendRequest, OfflineUser, OnlineUser, User } from "./Types";
 

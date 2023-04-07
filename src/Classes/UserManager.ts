@@ -1,5 +1,6 @@
 import { Client } from "../Client";
 import { FetchedUser } from "../Types";
+import { parseUUIDWithDashes } from "../utils";
 
 /** A Manager for Users */
 export default class UserManager {
@@ -27,6 +28,8 @@ export default class UserManager {
 		if (typeof uuid !== "string")
 			throw new Error("UUID must be a valid UUID String");
 
+		uuid = parseUUIDWithDashes(uuid);
+
 		if (!force) {
 			const user = this.users.find((u) => u.uuid == uuid);
 			if (user) return user;
@@ -43,7 +46,7 @@ export default class UserManager {
 					const data = await res.json();
 					return {
 						username: data.name,
-						uuid: data.id,
+						uuid: parseUUIDWithDashes(data.id),
 					};
 				} else return null;
 			})
@@ -85,7 +88,7 @@ export default class UserManager {
 					const data = await res.json();
 					return {
 						username: data.name,
-						uuid: data.id,
+						uuid: parseUUIDWithDashes(data.id),
 					};
 				} else return null;
 			})

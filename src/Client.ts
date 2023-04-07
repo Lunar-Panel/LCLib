@@ -4,35 +4,35 @@ import TypedEmitter from "typed-emitter";
 import backupWebSocket from "ws/index";
 import ClientConsole from "./Classes/ClientConsole";
 import Logger from "./Classes/Logger";
+import UserManager from "./Classes/UserManager";
 import {
-	IncomingPacketTypes,
-	OutgoingPacketIDs,
-	OutgoingPacketTypes,
-	readPacket,
-	writePacket,
+  IncomingPacketTypes,
+  OutgoingPacketIDs,
+  OutgoingPacketTypes,
+  readPacket,
+  writePacket,
 } from "./Packets";
 import Packet from "./Packets/Packet";
 import {
-	ClientOptions,
-	ClientState,
-	FriendRequest,
-	LCUser,
-	MCAccount,
-	OfflineUser,
-	OnlineUser,
-	User,
-	UserState,
+  ClientOptions,
+  ClientState,
+  FriendRequest,
+  LCUser,
+  MCAccount,
+  OfflineUser,
+  OnlineUser,
+  User,
+  UserState,
 } from "./Types";
 import { handle } from "./handle";
 import {
-	fetchUserInfo,
-	loginToMinecraft,
-	lunarAuth,
-	parseTime,
-	parseUUIDWithDashes,
-	parseUUIDWithoutDashes,
+  fetchUserInfo,
+  loginToMinecraft,
+  lunarAuth,
+  parseTime,
+  parseUUIDWithDashes,
+  parseUUIDWithoutDashes,
 } from "./utils";
-import UserManager from "./Classes/UserManager";
 
 /** The LCLib Client */
 export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents>) {
