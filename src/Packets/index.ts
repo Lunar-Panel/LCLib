@@ -1,7 +1,6 @@
 import { BufWrapper } from '@minecraft-js/bufwrapper';
 import ApplyCosmeticsPacket from './ApplyCosmeticsPacket';
 import ChatMessagePacket from './ChatMessagePacket';
-import ClientBanPacket from './ClientBanPacket';
 import ConsoleMessagePacket from './ConsoleMessagePacket';
 import DoEmotePacket from './DoEmotePacket';
 import EquipEmotesPacket from './EquipEmotesPacket';
@@ -19,7 +18,6 @@ import KeepAlivePacket from './KeepAlivePacket';
 import NotificationPacket from './NotificationPacket';
 import Packet from './Packet';
 import PacketId71 from './PacketId71';
-import UpdatePlusColorsPacket from './UpdatePlusColors';
 import PendingRequestsPacket from './PendingRequestsPacket';
 import PlayEmotePacket from './PlayEmotePacket';
 import PlayerInfoPacket from './PlayerInfoPacket';
@@ -29,6 +27,7 @@ import RemoveFriendPacket from './RemoveFriendPacket';
 import TaskListPacket from './TaskListPacket';
 import TaskListRequestPacket from './TaskListRequestPacket';
 import ToggleFriendRequestsPacket from './ToggleFriendRequestsPacket';
+import UpdatePlusColorsPacket from './UpdatePlusColors';
 import UpdateVisiblePlayersPacket from './UpdateVisiblePlayersPacket';
 
 export type ArrayElement<ArrayType extends readonly unknown[]> = ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
