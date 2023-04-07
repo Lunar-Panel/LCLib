@@ -7,7 +7,7 @@ export default class UserManager {
   public client: Client;
 
   /** The Cached Users */
-  public users: FetchedUser[];
+  public users: FetchedUser[] = [];
 
   /**
    * A Manager for Users
