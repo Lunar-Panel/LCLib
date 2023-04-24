@@ -6,32 +6,33 @@ import ClientConsole from "./Classes/ClientConsole";
 import Logger from "./Classes/Logger";
 import UserManager from "./Classes/UserManager";
 import {
-  IncomingPacketTypes,
-  OutgoingPacketIDs,
-  OutgoingPacketTypes,
-  readPacket,
-  writePacket,
+	IncomingPacketTypes,
+	OutgoingPacketIDs,
+	OutgoingPacketTypes,
+	readPacket,
+	writePacket,
 } from "./Packets";
 import Packet from "./Packets/Packet";
 import {
-  ClientOptions,
-  ClientState,
-  FriendRequest,
-  LCUser,
-  MCAccount,
-  OfflineUser,
-  OnlineUser,
-  User,
-  UserState,
+	ClientOptions,
+	ClientState,
+	FriendRequest,
+	LCUser,
+	MCAccount,
+	OfflineUser,
+	OnlineUser,
+	User,
+	UserState,
 } from "./Types";
 import { handle } from "./handle";
 import {
-  fetchUserInfo,
-  loginToMinecraft,
-  lunarAuth,
-  parseTime,
-  parseUUIDWithDashes,
-  parseUUIDWithoutDashes,
+	ModStates,
+	fetchUserInfo,
+	loginToMinecraft,
+	lunarAuth,
+	parseTime,
+	parseUUIDWithDashes,
+	parseUUIDWithoutDashes,
 } from "./utils";
 
 /** The LCLib Client */
@@ -162,8 +163,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 
 		state.arch ??= "x64";
 		state.branch ??= "master";
-		state.clothCloak ??= "false";
-		state.gitCommit ??= "d5e1bcee71328b1885a0365ea1c079b12b0dc4ee";
+		state.clothCloak ??= "";
+		state.gitCommit ??= "78f38fc2881c230532a91fcf8351807e0a9592fa";
 		state.hatHeightOffset ??=
 			'[{"id":3520,"height":0.0},{"id":2628,"height":0.0},{"id":3471,"height":0.0},{"id":3472,"height":0.0},{"id":2583,"height":0.0},{"id":2584,"height":0.0},{"id":2526,"height":0.0},{"id":2527,"height":0.0},{"id":2528,"height":0.0},{"id":2856,"height":0.0},{"id":2540,"height":0.0},{"id":2541,"height":0.0},{"id":2542,"height":0.0},{"id":3438,"height":0.0},{"id":2543,"height":0.0},{"id":3439,"height":0.0},{"id":2544,"height":0.0},{"id":2545,"height":0.0},{"id":2424,"height":0.0},{"id":2490,"height":0.0},{"id":2491,"height":0.0},{"id":2492,"height":0.0},{"id":2493,"height":0.0},{"id":2494,"height":0.0},{"id":2558,"height":0.0},{"id":2559,"height":0.0},{"id":3519,"height":0.0}]';
 		state.hwid ??= "not supplied";
@@ -171,17 +172,17 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 		state.lunarPlusColor ??= "-1";
 		state.os ??= "Windows";
 		state.server ??= "";
-		state.showHatsOverHelmet ??= "false";
-		state.showHatsOverSkinLayer ??= "true";
+		state.showHatsOverHelmet ??= "";
+		state.showHatsOverSkinLayer ??= "";
 		state.version ??= "v1_8";
-		state.flipShoulderPet ??= "false";
+		state.flipShoulderPet ??= "";
 		state.ichorModules ??= "common,optifine,lunar";
-		state.showOverBoots ??= "true";
-		state.showOverChestplate ??= "true";
-		state.showOverLeggings ??= "true";
+		state.showOverBoots ??= "";
+		state.showOverChestplate ??= "";
+		state.showOverLeggings ??= "";
 
 		state.accountType = "XBOX";
-		state.protocolVersion = "8";
+		state.protocolVersion = "9";
 		state.Host = "assetserver.lunarclientprod.com";
 		state.username = this.account.username;
 		state.playerId = this.uuidWithDashes;
@@ -247,7 +248,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 			heartbeatInterval = setInterval(() => {
 				if (heartbeatInterval)
 					this.sendImpersistent(OutgoingPacketIDs.KeepAlive, {
-						mods: {},
+						mods: ModStates,
 						game: "",
 					});
 			}, 30000);

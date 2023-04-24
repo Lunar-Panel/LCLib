@@ -26,7 +26,7 @@ export interface UserState {
 	/** Lunar Client Branch (Immutable) */
 	branch: "master";
 	/** Cloth Cloaks Enabled (`false` Recommended) */
-	clothCloak: "true" | "false";
+	clothCloak: string;
 	/** Lunar Client Git Commit (Recommended Empty) */
 	gitCommit: string;
 	/** Data for Hat Height Offset */
@@ -44,21 +44,21 @@ export interface UserState {
 	/** Server logged into */
 	server: string;
 	/** Show hats over helmet */
-	showHatsOverHelmet: "true" | "false";
+	showHatsOverHelmet: string;
 	/** Show hats over second skin layer */
-	showHatsOverSkinLayer: "true" | "false";
+	showHatsOverSkinLayer: string;
 	/** Game Version */
 	version: string;
 	/** Flip shoulder of shoulder pet */
-	flipShoulderPet: "true" | "false";
+	flipShoulderPet: string;
 	/** Ichor Modules Being Used (Recommended Empty) */
 	ichorModules: string;
 	/** Show cosmetics over boots */
-	showOverBoots: "true" | "false";
+	showOverBoots: string;
 	/** Show cosmetics over chestplate */
-	showOverChestplate: "true" | "false";
+	showOverChestplate: string;
 	/** Show cosmetics over leggings */
-	showOverLeggings: "true" | "false";
+	showOverLeggings: string;
 	/** WebSocket Host (Immutable) */
 	Host: "assetserver.lunarclientprod.com";
 

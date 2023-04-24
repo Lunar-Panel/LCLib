@@ -1,8 +1,8 @@
 import { Client } from "./Client";
 import {
-  IncomingPacketIDs,
-  IncomingPacketTypes,
-  OutgoingPacketIDs,
+	IncomingPacketIDs,
+	IncomingPacketTypes,
+	OutgoingPacketIDs,
 } from "./Packets";
 import { FriendRequest, OfflineUser, OnlineUser, User } from "./Types";
 
@@ -220,9 +220,12 @@ export async function handle<T extends keyof IncomingPacketTypes>(
 					data.metadata
 				);
 			break;
+		case IncomingPacketIDs.UpdatePlusColors:
+			// TODO: Handle
+			break;
 		default:
 			client.logger.warn(
-				`---------------------------------\nRECIEVED UNKNOWN PACKET: ${id}\n\n`,
+				`---------------------------------\nRECIEVED UN-HANDLED PACKET: ${id}\n\n`,
 				data,
 				"\n---------------------------------"
 			);
