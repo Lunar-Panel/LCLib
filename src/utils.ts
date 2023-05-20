@@ -1,7 +1,7 @@
-import { parseUUID } from "@minecraft-js/uuid";
-import { constants, createHash, publicEncrypt, randomBytes } from "crypto";
-import { Client } from "./Client";
-import { MCAccount } from "./Types";
+import { parseUUID } from '@minecraft-js/uuid';
+import { constants, createHash, publicEncrypt, randomBytes } from 'crypto';
+import { Client } from './Client';
+import { MCAccount } from './Types';
 
 /**
  * Uses a minecraft access token with a username and a uuid and converts it to a Lunar Client access token that can be used to connect to the asset websocket (one time use)
@@ -20,7 +20,7 @@ export function lunarAuth(
 	const uuidWithDashes = parseUUIDWithDashes(uuid);
 	return new Promise((res, rej) => {
 		const socket = new WebSocket(
-			"wss://authenticator.lunarclientprod.com/",
+			'wss://authenticator.lunarclientprod.com/',
 			{
 				headers: {
 					playerId: uuidWithDashes,
@@ -49,21 +49,21 @@ export function lunarAuth(
 				}
 			}
 			return (
-				(negative ? "-" : "") +
-				buffer.toString("hex").replace(/^0+/g, "")
+				(negative ? '-' : '') +
+				buffer.toString('hex').replace(/^0+/g, '')
 			);
 		}
 		function encrypt(data, publicKey) {
-			let pem = "-----BEGIN PUBLIC KEY-----\n";
-			let base64PubKey = Buffer.from(publicKey, "base64").toString(
-				"base64"
+			let pem = '-----BEGIN PUBLIC KEY-----\n';
+			let base64PubKey = Buffer.from(publicKey, 'base64').toString(
+				'base64'
 			);
 			const maxLineLength = 64;
 			while (base64PubKey.length > 0) {
-				pem += base64PubKey.substring(0, maxLineLength) + "\n";
+				pem += base64PubKey.substring(0, maxLineLength) + '\n';
 				base64PubKey = base64PubKey.substring(maxLineLength);
 			}
-			pem += "-----END PUBLIC KEY-----";
+			pem += '-----END PUBLIC KEY-----';
 			return publicEncrypt(
 				{
 					key: pem,
@@ -90,43 +90,43 @@ export function lunarAuth(
 			buffer.write(input);
 
 			while (padLength--) {
-				buffer.write("=", position++);
+				buffer.write('=', position++);
 			}
 
 			return buffer.toString();
 		}
 
-		socket.on("message", async (event) => {
+		socket.on('message', async (event) => {
 			let data = null;
 			try {
-				data = JSON.parse(event.toString("utf-8"));
+				data = JSON.parse(event.toString('utf-8'));
 			} catch (err) {
 				rej(err);
 				socket.close();
 			}
 			switch (data.packetType) {
-				case "SPacketEncryptionRequest":
+				case 'SPacketEncryptionRequest':
 					var secret = randomBytes(16);
 					await fetch(
-						"https://sessionserver.mojang.com/session/minecraft/join",
+						'https://sessionserver.mojang.com/session/minecraft/join',
 						{
-							method: "POST",
+							method: 'POST',
 							headers: {
-								"Content-Type": "application/json",
+								'Content-Type': 'application/json',
 							},
 							body: JSON.stringify({
 								accessToken: access_token,
 								selectedProfile: uuidWithoutDashes,
 								serverId: mcHexDigest(
-									createHash("sha1")
-										.update("")
+									createHash('sha1')
+										.update('')
 										.update(secret)
 										.update(
 											Buffer.from(
 												padString(data.publicKey)
-													.replace(/\-/g, "+")
-													.replace(/_/g, "/"),
-												"base64"
+													.replace(/\-/g, '+')
+													.replace(/_/g, '/'),
+												'base64'
 											)
 										)
 										.digest()
@@ -137,26 +137,26 @@ export function lunarAuth(
 					socket.send(
 						Buffer.from(
 							JSON.stringify({
-								packetType: "CPacketEncryptionResponse",
+								packetType: 'CPacketEncryptionResponse',
 								secretKey: encrypt(secret, data.publicKey)
-									.toString("base64")
-									.replace(/=/g, "")
-									.replace(/\+/g, "-")
-									.replace(/\//g, "_"),
+									.toString('base64')
+									.replace(/=/g, '')
+									.replace(/\+/g, '-')
+									.replace(/\//g, '_'),
 								publicKey: encrypt(
-									Buffer.from(data.randomBytes, "base64"),
+									Buffer.from(data.randomBytes, 'base64'),
 									data.publicKey
 								)
-									.toString("base64")
-									.replace(/=/g, "")
-									.replace(/\+/g, "-")
-									.replace(/\//g, "_"),
+									.toString('base64')
+									.replace(/=/g, '')
+									.replace(/\+/g, '-')
+									.replace(/\//g, '_'),
 							}),
-							"utf-8"
+							'utf-8'
 						)
 					);
 					break;
-				case "SPacketAuthenticatedRequest":
+				case 'SPacketAuthenticatedRequest':
 					socket.close();
 					res(data.jwtKey);
 					break;
@@ -175,40 +175,40 @@ export async function loginToMinecraft(
 	client: Client
 ): Promise<MCAccount> {
 	const { fetch } = client;
-	const fetch1: any = await fetch(
-		"https://user.auth.xboxlive.com/user/authenticate",
+	const userAuthReq: any = await fetch(
+		'https://user.auth.xboxlive.com/user/authenticate',
 		{
-			method: "POST",
+			method: 'POST',
 			headers: {
-				"Content-Type": "application/json",
-				Accept: "application/json",
+				'Content-Type': 'application/json',
+				Accept: 'application/json',
 			},
 			body: JSON.stringify({
 				Properties: {
-					AuthMethod: "RPS",
-					SiteName: "user.auth.xboxlive.com",
+					AuthMethod: 'RPS',
+					SiteName: 'user.auth.xboxlive.com',
 					RpsTicket: `d=${access_token}`,
 				},
-				RelyingParty: "http://auth.xboxlive.com",
-				TokenType: "JWT",
+				RelyingParty: 'http://auth.xboxlive.com',
+				TokenType: 'JWT',
 			}),
 		}
 	).then((res) => res.json());
-	const fetch2: any = await fetch(
-		"https://xsts.auth.xboxlive.com/xsts/authorize",
+	const xstsAuthReq: any = await fetch(
+		'https://xsts.auth.xboxlive.com/xsts/authorize',
 		{
-			method: "POST",
+			method: 'POST',
 			headers: {
-				"Content-Type": "application/json",
-				Accept: "application/json",
+				'Content-Type': 'application/json',
+				Accept: 'application/json',
 			},
 			body: JSON.stringify({
 				Properties: {
-					SandboxId: "RETAIL",
-					UserTokens: [fetch1.Token],
+					SandboxId: 'RETAIL',
+					UserTokens: [userAuthReq.Token],
 				},
-				RelyingParty: "rp://api.minecraftservices.com/",
-				TokenType: "JWT",
+				RelyingParty: 'rp://api.minecraftservices.com/',
+				TokenType: 'JWT',
 			}),
 		}
 	).then((res) => res.json());
@@ -217,14 +217,14 @@ export async function loginToMinecraft(
 		let res;
 		do {
 			res = await fetch(
-				"https://api.minecraftservices.com/authentication/login_with_xbox",
+				'https://api.minecraftservices.com/authentication/login_with_xbox',
 				{
-					method: "POST",
+					method: 'POST',
 					headers: {
-						"Content-Type": "application/json",
+						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify({
-						identityToken: `XBL3.0 x=${fetch1.DisplayClaims.xui[0].uhs};${fetch2.Token}`,
+						identityToken: `XBL3.0 x=${userAuthReq.DisplayClaims.xui[0].uhs};${xstsAuthReq.Token}`,
 					}),
 				}
 			);
@@ -248,7 +248,7 @@ export const parseUUIDWithoutDashes = (uuid: string) =>
  * @returns The human-readable string
  */
 export function parseTime(milliseconds: number, excludeMS = false) {
-	if (typeof milliseconds !== "number") milliseconds = 0;
+	if (typeof milliseconds !== 'number') milliseconds = 0;
 
 	const data = {
 		days: Math.trunc(milliseconds / 86_400_000),
@@ -266,7 +266,7 @@ export function parseTime(milliseconds: number, excludeMS = false) {
 				item.substring(1).toLowerCase();
 			timeItems.push(
 				data[item] +
-					" " +
+					' ' +
 					formattedName.substring(
 						0,
 						formattedName.length - (data[item] == 1 ? 1 : 0)
@@ -277,21 +277,21 @@ export function parseTime(milliseconds: number, excludeMS = false) {
 
 	if (excludeMS && timeItems.length > 1)
 		timeItems.splice(
-			timeItems.findIndex((i) => i.includes("Milliseconds")),
+			timeItems.findIndex((i) => i.includes('Milliseconds')),
 			1
 		);
 
 	let time: string;
 	if (timeItems.length === 1) time = timeItems[0];
 	else if (timeItems.length === 2)
-		time = timeItems[0] + " and " + timeItems[1];
+		time = timeItems[0] + ' and ' + timeItems[1];
 	else {
-		time = "";
+		time = '';
 		for (const item of timeItems) {
 			if (timeItems.indexOf(item) === timeItems.length - 1)
-				time += ", and " + item;
+				time += ', and ' + item;
 			else if (timeItems.indexOf(item) === 0) time = item;
-			else time += ", " + item;
+			else time += ', ' + item;
 		}
 	}
 
@@ -308,7 +308,7 @@ export async function fetchUserInfo(
 	{ fetch }: Client
 ): Promise<MCAccount> {
 	const { name: username, id: uuid } = await fetch(
-		"https://api.minecraftservices.com/minecraft/profile",
+		'https://api.minecraftservices.com/minecraft/profile',
 		{
 			headers: {
 				Authorization: `Bearer ${token}`,
@@ -322,6 +322,8 @@ export async function fetchUserInfo(
 	};
 }
 
+/** Git Commit used in Connection, must match ModStates */
+export const gitCommit = '78f38fc2881c230532a91fcf8351807e0a9592fa';
 /** Mod States used in KeepAlive Packets */
 export const ModStates = {
 	scrollable_tooltips: true,
@@ -351,7 +353,7 @@ export const ModStates = {
 	pack_organizer: true,
 	saturation_mod: true,
 	snaplook: false,
-	"mumble-link": false,
+	'mumble-link': false,
 	neu: false,
 	momentum_mod: true,
 	skyblockAddons: false,

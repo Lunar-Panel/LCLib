@@ -1,5 +1,6 @@
 import { BufWrapper } from '@minecraft-js/bufwrapper';
 import { parseUUID } from '@minecraft-js/uuid';
+import { Cosmetic, PlayerInfo } from '../Types';
 import Packet from './Packet';
 
 export default class PlayerInfoPacket extends Packet<PlayerInfo> {
@@ -29,7 +30,9 @@ export default class PlayerInfoPacket extends Packet<PlayerInfo> {
 		this.buf.writeBoolean(data.showHatAboveHelmet);
 		this.buf.writeBoolean(data.scaleHatWithHeadwear);
 
-		const adjustableHeightCosmeticsKeys = Object.keys(data.adjustableHeightCosmetics);
+		const adjustableHeightCosmeticsKeys = Object.keys(
+			data.adjustableHeightCosmetics
+		);
 		this.buf.writeVarInt(adjustableHeightCosmeticsKeys.length);
 		for (const key of adjustableHeightCosmeticsKeys) {
 			this.buf.writeInt(parseInt(key));
@@ -37,10 +40,10 @@ export default class PlayerInfoPacket extends Packet<PlayerInfo> {
 		}
 
 		this.buf.writeInt(data.plusColor);
+		this.buf.writeBoolean(data.petFlipShoulder);
 		this.buf.writeBoolean(data.unknownBooleanB);
 		this.buf.writeBoolean(data.unknownBooleanC);
 		this.buf.writeBoolean(data.unknownBooleanD);
-		this.buf.writeBoolean(data.unknownBooleanE);
 
 		this.buf.finish();
 	}
@@ -52,7 +55,7 @@ export default class PlayerInfoPacket extends Packet<PlayerInfo> {
 		for (let i = 0; i < cosmeticsLength; i++) {
 			cosmetics.push({
 				id: this.buf.readVarInt(),
-				equipped: this.buf.readBoolean()
+				equipped: this.buf.readBoolean(),
 			});
 		}
 
@@ -72,10 +75,10 @@ export default class PlayerInfoPacket extends Packet<PlayerInfo> {
 		}
 
 		const plusColor = this.buf.readInt();
+		const petFlipShoulder = this.buf.readBoolean();
 		const unknownBooleanB = this.buf.readBoolean();
 		const unknownBooleanC = this.buf.readBoolean();
 		const unknownBooleanD = this.buf.readBoolean();
-		const unknownBooleanE = this.buf.readBoolean();
 
 		this.data = {
 			uuid: uuid.toString(true),
@@ -88,32 +91,10 @@ export default class PlayerInfoPacket extends Packet<PlayerInfo> {
 			scaleHatWithHeadwear,
 			adjustableHeightCosmetics,
 			plusColor,
+			petFlipShoulder,
 			unknownBooleanB,
 			unknownBooleanC,
 			unknownBooleanD,
-			unknownBooleanE
 		};
 	}
-}
-
-interface Cosmetic {
-	id: number;
-	equipped: boolean;
-}
-
-interface PlayerInfo {
-	uuid: string;
-	cosmetics: Cosmetic[];
-	color: number;
-	unknownBooleanA: boolean;
-	premium: boolean;
-	clothCloak: boolean;
-	showHatAboveHelmet: boolean;
-	scaleHatWithHeadwear: boolean;
-	adjustableHeightCosmetics: { [key: string]: number };
-	plusColor: number;
-	unknownBooleanB: boolean;
-	unknownBooleanC: boolean;
-	unknownBooleanD: boolean;
-	unknownBooleanE: boolean;
 }

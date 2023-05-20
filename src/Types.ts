@@ -20,11 +20,11 @@ export enum ClientState {
 /** State for a User */
 export interface UserState {
 	/** Account Type (Immutable) */
-	accountType: "XBOX";
+	accountType: 'XBOX';
 	/** Operating System Architecture */
 	arch: string;
 	/** Lunar Client Branch (Immutable) */
-	branch: "master";
+	branch: 'master';
 	/** Cloth Cloaks Enabled (`false` Recommended) */
 	clothCloak: string;
 	/** Lunar Client Git Commit (Recommended Empty) */
@@ -60,7 +60,7 @@ export interface UserState {
 	/** Show cosmetics over leggings */
 	showOverLeggings: string;
 	/** WebSocket Host (Immutable) */
-	Host: "assetserver.lunarclientprod.com";
+	Host: 'assetserver.lunarclientprod.com';
 
 	/** Player Username (Immutable) */
 	username: string;
@@ -85,6 +85,10 @@ export interface ClientOptions {
 	 * MUST HAVE THE SAME FORMAT AS NPM PACKAGE `node-fetch`
 	 */
 	fetch: any;
+	/**
+	 * A Custom Socket URL that the Client should connect to, defaults to "wss://assetserver.lunarclientprod.com/connect/"
+	 */
+	socketURL: string;
 }
 
 /** An Offline User */
@@ -104,7 +108,7 @@ export interface OnlineUser {
 	/** The LCUser of the User, only when it's been fetched or in some special and unreliable scenarios */
 	lcUser?: LCUser;
 	/** All messages you have sent to or recieved from this player (resets once they go offline) */
-	messages: {
+	messages?: {
 		/** UUID of the player who sent the message */
 		uuid: string;
 		/** The Message Text */
@@ -127,23 +131,8 @@ export interface OfflineUser {
 /** A User, either Online or Offline */
 export type User = OnlineUser | OfflineUser;
 
-/** Data for a User when fetche from Lunar Client, only available when online */
-export interface LCUser {
-	uuid: string;
-	adjustableHeightCosmetics: unknown;
-	clothCloak: boolean;
-	color: number;
-	cosmetics: { id: number; equipped: boolean }[];
-	plusColor: number;
-	premium: boolean;
-	scaleHatWithHeadwear: boolean;
-	showHatAboveHelmet: boolean;
-	unknownBooleanA: boolean;
-	unknownBooleanB: boolean;
-	unknownBooleanC: boolean;
-	unknownBooleanD: boolean;
-	unknownBooleanE: boolean;
-}
+/** Data for a User when fetched from Lunar Client, only available when online */
+export interface LCUser extends PlayerInfo {}
 
 /** A Pending Friend Request */
 export interface FriendRequest {
@@ -161,4 +150,37 @@ export interface FetchedUser {
 	uuid: string;
 	/** User Username */
 	username: string;
+}
+
+/** Possible User Statuses */
+export enum PlayerStatus {
+	ONLINE,
+	AWAY,
+	BUSY,
+	INVISIBLE,
+	OFFLINE,
+}
+
+/** Lunar Client User Data for a Player */
+export interface PlayerInfo {
+	uuid: string;
+	cosmetics: Cosmetic[];
+	color: number;
+	unknownBooleanA: boolean;
+	premium: boolean;
+	clothCloak: boolean;
+	showHatAboveHelmet: boolean;
+	scaleHatWithHeadwear: boolean;
+	adjustableHeightCosmetics: { [key: string]: number };
+	plusColor: number;
+	petFlipShoulder: boolean;
+	unknownBooleanB: boolean;
+	unknownBooleanC: boolean;
+	unknownBooleanD: boolean;
+}
+
+/** Lunar Client Cosmetic */
+export interface Cosmetic {
+	id: number;
+	equipped: boolean;
 }

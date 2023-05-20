@@ -14,10 +14,10 @@
 
 The state of the Client:
 
-- 1 = The `init()` method hasn't been called yet OR there was an invalid access token (you will be notified of that with an event)
-- 2 = The Client is initiated but the `connect()` method hasn't been called yet OR the Client was manually disconnected
-- 3 = The Client is connecting or reconnecting to the WebSocket
-- 4 = The Client is connected to the WebSocket
+-   1 = The `init()` method hasn't been called yet OR there was an invalid access token (you will be notified of that with an event)
+-   2 = The Client is initiated but the `connect()` method hasn't been called yet OR the Client was manually disconnected
+-   3 = The Client is connecting or reconnecting to the WebSocket
+-   4 = The Client is connected to the WebSocket
 
 ### `account`
 
@@ -83,7 +83,7 @@ Whether Incoming Friend Requests are enabled for the Client User
 
 #### `init(access_token: string, minecraft_token?: boolean): Promise<void>`
 
-Initiate the Client (must be the first thing you do to the Client) with either a **Microsoft Access Token** OR a **Minecraft Authed Access Token**, but you must set the second argument to true.
+Initiate the Client (must be the first thing you do to the Client) with either a **Microsoft Access Token** OR a **Minecraft Authed Access Token**, but for a minecraft token you must set the second argument to `true`.
 
 #### `connect(userState): Promise<void>`
 

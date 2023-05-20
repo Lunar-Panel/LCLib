@@ -1,18 +1,18 @@
-import EventEmitter, { once } from "events";
-import backupFetch from "node-fetch";
-import TypedEmitter from "typed-emitter";
-import backupWebSocket from "ws/index";
-import ClientConsole from "./Classes/ClientConsole";
-import Logger from "./Classes/Logger";
-import UserManager from "./Classes/UserManager";
+import EventEmitter, { once } from 'events';
+import backupFetch from 'node-fetch';
+import TypedEmitter from 'typed-emitter';
+import backupWebSocket from 'ws/index';
+import ClientConsole from './Classes/ClientConsole';
+import Logger from './Classes/Logger';
+import UserManager from './Classes/UserManager';
 import {
 	IncomingPacketTypes,
 	OutgoingPacketIDs,
 	OutgoingPacketTypes,
 	readPacket,
 	writePacket,
-} from "./Packets";
-import Packet from "./Packets/Packet";
+} from './Packets';
+import Packet from './Packets/Packet';
 import {
 	ClientOptions,
 	ClientState,
@@ -21,19 +21,21 @@ import {
 	MCAccount,
 	OfflineUser,
 	OnlineUser,
+	PlayerStatus,
 	User,
 	UserState,
-} from "./Types";
-import { handle } from "./handle";
+} from './Types';
+import { handle } from './handle';
 import {
 	ModStates,
 	fetchUserInfo,
+	gitCommit,
 	loginToMinecraft,
 	lunarAuth,
 	parseTime,
 	parseUUIDWithDashes,
 	parseUUIDWithoutDashes,
-} from "./utils";
+} from './utils';
 
 /** The LCLib Client */
 export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents>) {
@@ -46,6 +48,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 	// Options
 	public WebSocket: typeof backupWebSocket;
 	public fetch: typeof backupFetch;
+	public socketURL: string;
 
 	// Client State Info
 
@@ -97,6 +100,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 	};
 	/** Whether Incoming Friend Requests are enabled for the Client User */
 	public friendRequestsEnabled: boolean;
+	/** Client Player Status */
+	public status: PlayerStatus = PlayerStatus.ONLINE;
 
 	// Internally used
 	private manuallyDisconnected = false;
@@ -112,8 +117,11 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 		this.state = ClientState.REQUIRES_INIT;
 		this.clientConsole = new ClientConsole(this);
 
-		this.WebSocket = options.WebSocket ?? backupWebSocket;
-		this.fetch = options.fetch ?? backupFetch;
+		this.WebSocket = options.WebSocket || backupWebSocket;
+		this.fetch = options.fetch || backupFetch;
+		this.socketURL =
+			options.socketURL ||
+			'wss://assetserver.lunarclientprod.com/connect/';
 	}
 
 	/**
@@ -127,29 +135,29 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 			if (minecraft_authed)
 				this.account = await fetchUserInfo(access_token, this);
 			else {
-				this.logger.log("Logging In...");
+				this.logger.log('Logging In...');
 				try {
 					const minecraftAuthTimeStart = Date.now();
 					this.account = await loginToMinecraft(access_token, this);
 					this.logger.debug(
-						"Minecraft Auth took " +
+						'Minecraft Auth took ' +
 							parseTime(Date.now() - minecraftAuthTimeStart)
 					);
 				} catch {
-					this.emit("disconnected");
+					this.emit('disconnected');
 					this.state = ClientState.REQUIRES_INIT;
-					this.logger.error("Failed to Log In");
+					this.logger.error('Failed to Log In');
 				}
 			}
 		} catch (err) {
 			this.logger.error(
-				"An error was encountered during the initiation process",
+				'An error was encountered during the initiation process',
 				err
 			);
-			return this.emit("invalid");
+			return this.emit('invalid');
 		}
 		this.state = ClientState.INITIATED;
-		this.logger.log("Successfully Logged In");
+		this.logger.log('Successfully Logged In');
 	}
 
 	/**
@@ -158,32 +166,32 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 	 */
 	public async connect(state: Partial<UserState> = {}) {
 		if (this.state != ClientState.INITIATED) return;
-		this.logger.log("Starting Connect Sequence");
+		this.logger.log('Starting Connect Sequence');
 		this.sentConnected = false;
 
-		state.arch ??= "x64";
-		state.branch ??= "master";
-		state.clothCloak ??= "";
-		state.gitCommit ??= "78f38fc2881c230532a91fcf8351807e0a9592fa";
+		state.arch ??= 'x64';
+		state.branch ??= 'master';
+		state.clothCloak ??= '';
+		state.gitCommit ??= gitCommit;
 		state.hatHeightOffset ??=
 			'[{"id":3520,"height":0.0},{"id":2628,"height":0.0},{"id":3471,"height":0.0},{"id":3472,"height":0.0},{"id":2583,"height":0.0},{"id":2584,"height":0.0},{"id":2526,"height":0.0},{"id":2527,"height":0.0},{"id":2528,"height":0.0},{"id":2856,"height":0.0},{"id":2540,"height":0.0},{"id":2541,"height":0.0},{"id":2542,"height":0.0},{"id":3438,"height":0.0},{"id":2543,"height":0.0},{"id":3439,"height":0.0},{"id":2544,"height":0.0},{"id":2545,"height":0.0},{"id":2424,"height":0.0},{"id":2490,"height":0.0},{"id":2491,"height":0.0},{"id":2492,"height":0.0},{"id":2493,"height":0.0},{"id":2494,"height":0.0},{"id":2558,"height":0.0},{"id":2559,"height":0.0},{"id":3519,"height":0.0}]';
-		state.hwid ??= "not supplied";
-		state.launcherVersion ??= "not supplied";
-		state.lunarPlusColor ??= "-1";
-		state.os ??= "Windows";
-		state.server ??= "";
-		state.showHatsOverHelmet ??= "";
-		state.showHatsOverSkinLayer ??= "";
-		state.version ??= "v1_8";
-		state.flipShoulderPet ??= "";
-		state.ichorModules ??= "common,optifine,lunar";
-		state.showOverBoots ??= "";
-		state.showOverChestplate ??= "";
-		state.showOverLeggings ??= "";
+		state.hwid ??= 'not supplied';
+		state.launcherVersion ??= 'not supplied';
+		state.lunarPlusColor ??= '-1';
+		state.os ??= 'Windows';
+		state.server ??= '';
+		state.showHatsOverHelmet ??= '';
+		state.showHatsOverSkinLayer ??= '';
+		state.version ??= 'v1_8';
+		state.flipShoulderPet ??= '';
+		state.ichorModules ??= 'common,optifine,lunar';
+		state.showOverBoots ??= '';
+		state.showOverChestplate ??= '';
+		state.showOverLeggings ??= '';
 
-		state.accountType = "XBOX";
-		state.protocolVersion = "9";
-		state.Host = "assetserver.lunarclientprod.com";
+		state.accountType = 'XBOX';
+		state.protocolVersion = '9';
+		state.Host = 'assetserver.lunarclientprod.com';
 		state.username = this.account.username;
 		state.playerId = this.uuidWithDashes;
 
@@ -191,7 +199,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 
 		this._connect();
 
-		return await once(this, "connected");
+		return await once(this, 'connected');
 	}
 
 	private async _connect() {
@@ -201,7 +209,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 		)
 			return;
 		this.state = ClientState.CONNECTING;
-		this.logger.log("Connecting...");
+		this.logger.log('Connecting...');
 		this.socket = null;
 
 		let lunarToken: string;
@@ -214,11 +222,11 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 				this
 			);
 			this.logger.debug(
-				"Lunar Auth took " + parseTime(Date.now() - lunarAuthTimeStart)
+				'Lunar Auth took ' + parseTime(Date.now() - lunarAuthTimeStart)
 			);
 			this.failedAttempts = 0;
 		} catch (err) {
-			this.logger.error("Lunar Auth Failed");
+			this.logger.error('Lunar Auth Failed');
 			if (this.failedAttempts < (this.user ? 5 : 3)) {
 				this.failedAttempts += 1;
 				return setTimeout(
@@ -228,54 +236,50 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 			} else {
 				this.state = ClientState.REQUIRES_INIT;
 				this.sentConnected = false;
-				return this.emit("invalid");
+				return this.emit('invalid');
 			}
 		}
 
-		this.socket = new this.WebSocket(
-			"wss://assetserver.lunarclientprod.com/connect/",
-			{
-				headers: { ...this.userState, Authorization: lunarToken },
-			}
-		);
+		this.socket = new this.WebSocket(this.socketURL, {
+			headers: { ...this.userState, Authorization: lunarToken },
+		});
 		let heartbeatInterval: NodeJS.Timer;
 		let onlineSince = null;
 
-		this.socket.on("open", () => {
-			this.logger.log("Connected!");
+		this.socket.on('open', () => {
+			this.logger.log('Connected!');
 			onlineSince = Date.now();
 			this.state = ClientState.CONNECTED;
 			heartbeatInterval = setInterval(() => {
-				if (heartbeatInterval)
-					this.sendImpersistent(OutgoingPacketIDs.KeepAlive, {
-						mods: ModStates,
-						game: "",
-					});
+				this.sendImpersistent(OutgoingPacketIDs.KeepAlive, {
+					mods: ModStates,
+					game: '',
+				});
 			}, 30000);
-			this.emit("open");
+			this.emit('open');
 			if (!this.sentConnected) {
 				this.sentConnected = true;
-				this.emit("connected");
+				this.emit('connected');
 			}
 		});
 
-		this.socket.on("close", (code, reason) => {
+		this.socket.on('close', (code, reason) => {
 			clearInterval(heartbeatInterval);
 			if (this.manuallyDisconnected) {
 				this.manuallyDisconnected = false;
-				this.logger.log("Disconnected Manually");
+				this.logger.log('Disconnected Manually');
 				this.state = ClientState.INITIATED;
 			} else {
 				this.logger.log(
 					`Disconnected with Code ${code} and Reason "${
-						reason ?? "No Reason Given"
+						reason ?? 'No Reason Given'
 					}" ${
 						onlineSince
 							? `after ${parseTime(
 									Date.now() - onlineSince,
 									true
 							  )}`
-							: "instantly"
+							: 'instantly'
 					}`
 				);
 				this.state = ClientState.CONNECTING;
@@ -283,11 +287,11 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 			}
 		});
 
-		this.socket.on("error", (err) => {
-			this.logger.error("WebSocket Error", err);
+		this.socket.on('error', (err) => {
+			this.logger.error('WebSocket Error', err);
 		});
 
-		this.socket.on("message", (packet) => {
+		this.socket.on('message', (packet) => {
 			let data: { id: number; data: Packet };
 			try {
 				data = readPacket(packet as Buffer) as {
@@ -295,7 +299,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 					data: Packet;
 				};
 			} catch (err) {
-				return this.logger.error("WebSocket Message Error", err);
+				return this.logger.error('WebSocket Message Error', err);
 			}
 			handle(this, data.id as keyof IncomingPacketTypes, data.data.data);
 		});
@@ -328,7 +332,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 		data: OutgoingPacketTypes[T]
 	) {
 		if (this.socket?.readyState !== WebSocket.OPEN)
-			await once(this, "open");
+			await once(this, 'open');
 		return await this.send(id, data)
 			.then(() => true)
 			.catch(() => false);
@@ -355,8 +359,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 	 * @param message The message
 	 * @returns A promise that resolves with whether the message send was successful
 	 */
-	public async sendMessage(user: User | string, message: string = "") {
-		const uuid = typeof user === "object" ? user.uuid : user;
+	public async sendMessage(user: User | string, message: string = '') {
+		const uuid = typeof user === 'object' ? user.uuid : user;
 		if (!this.friends.get(uuid)?.online) return false;
 		if (
 			!(await this.sendPersistent(OutgoingPacketIDs.FriendMessage, {
@@ -381,8 +385,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 	 */
 	public async changeServer(server: string) {
 		return await this.sendPersistent(OutgoingPacketIDs.JoinServer, {
-			uuid: "",
-			server: typeof server === "string" ? server : "In Menus",
+			uuid: '',
+			server: typeof server === 'string' ? server : 'In Menus',
 		});
 		// TODO: Maybe do some state for this idk
 	}
@@ -396,18 +400,18 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 		data: { uuid?: string; username?: string } = {}
 	) {
 		data ??= {};
-		if (typeof data.uuid !== "string" && typeof data.username !== "string")
+		if (typeof data.uuid !== 'string' && typeof data.username !== 'string')
 			throw new Error(
-				"Must have either a valid UUID or valid Username to add a friend!"
+				'Must have either a valid UUID or valid Username to add a friend!'
 			);
-		if (typeof data.uuid !== "string") {
+		if (typeof data.uuid !== 'string') {
 			data.uuid = (
 				await this.userManager.fetchUsername(data.username)
 			).uuid;
 		}
 		data.uuid = parseUUIDWithDashes(data.uuid);
 		if (this.friends.has(data.uuid)) return false;
-		if (typeof data.username !== "string") {
+		if (typeof data.username !== 'string') {
 			data.username = (
 				await this.userManager.fetchUUID(data.uuid)
 			).username;
@@ -421,9 +425,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 			return false;
 
 		const result = await this.awaitNotification(
-			"Friend Request has been sent."
+			'Friend Request has been sent.'
 		);
-		if (result.title === "Success!") {
+		if (result.title === 'Success!') {
 			this.friendRequests.set(data.uuid, {
 				uuid: data.uuid,
 				username: data.username,
@@ -440,7 +444,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 	 * @returns Whether the Removal was successful
 	 */
 	public async removeFriend(user: User | string) {
-		const uuid = typeof user === "object" ? user.uuid : user;
+		const uuid = typeof user === 'object' ? user.uuid : user;
 		if (!this.friends.has(uuid)) return false;
 		if (
 			!(await this.sendPersistent(OutgoingPacketIDs.RemoveFriend, {
@@ -465,7 +469,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 		request: FriendRequest | string,
 		accepted: boolean = false
 	) {
-		const uuid = typeof request === "object" ? request.uuid : request;
+		const uuid = typeof request === 'object' ? request.uuid : request;
 		if (
 			!this.friendRequests.has(uuid) ||
 			(this.friendRequests.get(uuid).outgoing && accepted)
@@ -527,37 +531,58 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 	}
 
 	/**
+	 * Set the Client Status
+	 * @param status The Status
+	 * @returns Whether the set succeeded
+	 */
+	public async setStatus(status: PlayerStatus) {
+		if (
+			await this.sendPersistent(OutgoingPacketIDs.FriendUpdate, {
+				uuid: this.uuidWithDashes,
+				name: this.account.username,
+				status,
+				online: true,
+				version: this.userState.version,
+			})
+		) {
+			this.status = status;
+			return true;
+		} else return false;
+	}
+
+	/**
 	 * Await a Notification (USED INTERNALLY)
 	 * @returns The notification data as an object
 	 */
 	private async awaitNotification(
 		successIdentifier?: string,
-		successIf: string = "Success!"
+		successIf: string = 'Success!'
 	): Promise<{
 		title: string;
 		message: string;
 	}> {
 		let data;
 		while (!data) {
-			const msg = await once(this, "notification");
+			const msg = await once(this, 'notification');
 			console.log(msg);
 			if (
 				successIdentifier &&
-				(msg[0] || "").trim().replace(/§[0-9A-Za-z]/g, "") ==
-					(successIf || "Success!")
+				(msg[0] || '').trim().replace(/§[0-9A-Za-z]/g, '') ==
+					(successIf || 'Success!')
 			) {
 				if (
-					(msg[1] || "").trim().replace(/§[0-9A-Za-z]/g, "") ==
+					(msg[1] || '').trim().replace(/§[0-9A-Za-z]/g, '') ==
 					successIdentifier
 				)
 					data = msg;
 			} else data = msg;
 		}
 		return {
-			title: (data[0] || "").trim().replace(/§[0-9A-Za-z]/g, ""),
-			message: (data[1] || "").trim().replace(/§[0-9A-Za-z]/g, ""),
+			title: (data[0] || '').trim().replace(/§[0-9A-Za-z]/g, ''),
+			message: (data[1] || '').trim().replace(/§[0-9A-Za-z]/g, ''),
 		};
 	}
+	x;
 
 	/**
 	 * Fetch all players with the UUIDs specified
@@ -580,12 +605,12 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 				users[uuids.indexOf(user.uuid)] = user;
 			if (uuids.length == users.length) resolve();
 		};
-		this.on("playerUpdate", listener);
+		this.on('playerUpdate', listener);
 		await new Promise((res) => {
 			resolve = res;
 			setTimeout(res, 2500);
 		});
-		this.off("playerUpdate", listener);
+		this.off('playerUpdate', listener);
 		await Promise.all(
 			uuids.map(async (uuid) => {
 				if (users[uuids.indexOf(uuid)]?.uuid != uuid) {
@@ -599,7 +624,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<ClientEvents
 					users[uuids.indexOf(uuid)] = user;
 					if (this.friends.has(uuid)) this.friends.set(uuid, user);
 					else this._users.set(uuid, user);
-					this.emit("playerUpdate", user);
+					this.emit('playerUpdate', user);
 				}
 			})
 		);

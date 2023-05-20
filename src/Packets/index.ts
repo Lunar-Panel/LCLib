@@ -4,12 +4,14 @@ import ChatMessagePacket from './ChatMessagePacket';
 import ConsoleMessagePacket from './ConsoleMessagePacket';
 import DoEmotePacket from './DoEmotePacket';
 import EquipEmotesPacket from './EquipEmotesPacket';
+import FeaturePacket from './FeaturePacket';
 import ForceCrashPacket from './ForceCrashPacket';
 import FriendListPacket from './FriendListPacket';
 import FriendMessagePacket from './FriendMessagePacket';
 import FriendRequestPacket from './FriendRequestPacket';
 import FriendResponsePacket from './FriendResponsePacket';
-import FriendUpdatePacket from './FriendUpdatePacket';
+import FriendUpdatePacketToClient from './FriendUpdatePacketToClient';
+import FriendUpdatePacketToServer from './FriendUpdatePacketToServer';
 import GiveEmotesPacket from './GiveEmotesPacket';
 import HostListPacket from './HostListPacket';
 import HostListRequestPacket from './HostListRequest';
@@ -30,10 +32,31 @@ import ToggleFriendRequestsPacket from './ToggleFriendRequestsPacket';
 import UpdatePlusColorsPacket from './UpdatePlusColors';
 import UpdateVisiblePlayersPacket from './UpdateVisiblePlayersPacket';
 
-export type ArrayElement<ArrayType extends readonly unknown[]> = ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
+export type ArrayElement<ArrayType extends readonly unknown[]> =
+	ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
 
 /** From Server */
-export const IncomingPackets = [ConsoleMessagePacket, NotificationPacket, FriendListPacket, FriendMessagePacket, JoinServerPacket, PendingRequestsPacket, PlayerInfoPacket, FriendRequestPacket, ReceiveFriendRequestPacket, RemoveFriendPacket, FriendUpdatePacket, FriendResponsePacket, ForceCrashPacket, TaskListRequestPacket, PlayEmotePacket, GiveEmotesPacket, ChatMessagePacket, HostListRequestPacket, UpdatePlusColorsPacket];
+export const IncomingPackets = [
+	ConsoleMessagePacket,
+	NotificationPacket,
+	FriendListPacket,
+	FriendMessagePacket,
+	JoinServerPacket,
+	PendingRequestsPacket,
+	PlayerInfoPacket,
+	FriendRequestPacket,
+	ReceiveFriendRequestPacket,
+	RemoveFriendPacket,
+	FriendUpdatePacketToClient,
+	FriendResponsePacket,
+	ForceCrashPacket,
+	TaskListRequestPacket,
+	PlayEmotePacket,
+	GiveEmotesPacket,
+	ChatMessagePacket,
+	HostListRequestPacket,
+	UpdatePlusColorsPacket,
+];
 
 export type IncomingPacketTypes = {
 	[key in ArrayElement<typeof IncomingPackets>['id']]: Extract<
@@ -47,7 +70,26 @@ export type IncomingPacketTypes = {
 };
 
 /** To Server */
-export const OutgoingPackets = [DoEmotePacket, ConsoleMessagePacket, JoinServerPacket, EquipEmotesPacket, ApplyCosmeticsPacket, PlayerInfoRequestPacket, FriendMessagePacket, FriendRequestPacket, FriendResponsePacket, KeepAlivePacket, TaskListPacket, HostListPacket, RemoveFriendPacket, ToggleFriendRequestsPacket, UpdateVisiblePlayersPacket, PacketId71];
+export const OutgoingPackets = [
+	DoEmotePacket,
+	ConsoleMessagePacket,
+	JoinServerPacket,
+	EquipEmotesPacket,
+	ApplyCosmeticsPacket,
+	PlayerInfoRequestPacket,
+	FriendMessagePacket,
+	FriendRequestPacket,
+	FriendResponsePacket,
+	KeepAlivePacket,
+	TaskListPacket,
+	HostListPacket,
+	RemoveFriendPacket,
+	ToggleFriendRequestsPacket,
+	UpdateVisiblePlayersPacket,
+	PacketId71,
+	FriendUpdatePacketToServer,
+	FeaturePacket,
+];
 
 export type OutgoingPacketTypes = {
 	[key in ArrayElement<typeof OutgoingPackets>['id']]: Extract<
@@ -80,7 +122,7 @@ export enum IncomingPacketIDs {
 	ChatMessage = 65,
 	HostListRequest = 67,
 	UpdatePlusColors = 73,
-	// ClientBan = 1056
+	ClientBan = 1056,
 }
 
 export enum OutgoingPacketIDs {
@@ -89,6 +131,7 @@ export enum OutgoingPacketIDs {
 	JoinServer = 6,
 	FriendRequest = 9,
 	RemoveFriend = 17,
+	FriendUpdate = 18,
 	// ApplyCosmetics = 20,
 	FriendResponse = 21,
 	ToggleFriendRequests = 22,
@@ -99,11 +142,12 @@ export enum OutgoingPacketIDs {
 	// UpdateVisiblePlayers = 50,
 	// EquipEmotes = 56,
 	KeepAlive = 64,
-	HostList = 68
+	HostList = 68,
+	// FeaturePacket = 104,
 }
 
 export function writePacket(id: number, data: any = {}): Packet | void {
-	const Packet = OutgoingPackets.find(p => p.id == id);
+	const Packet = OutgoingPackets.find((p) => p.id == id);
 
 	if (!Packet) throw new Error(`No Packet Found While Writing, ID ${id}`);
 
@@ -117,7 +161,7 @@ export function readPacket(data: Buffer): { id: number; data: Packet } | void {
 	const buf = new BufWrapper(data);
 
 	const id = buf.readVarInt();
-	const Packet = IncomingPackets.find(p => p.id == id);
+	const Packet = IncomingPackets.find((p) => p.id == id);
 
 	if (!Packet) throw new Error(`No Packet Found While Reading, ID ${id}`);
 

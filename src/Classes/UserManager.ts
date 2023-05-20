@@ -1,6 +1,6 @@
-import { Client } from "../Client";
-import { FetchedUser } from "../Types";
-import { parseUUIDWithDashes } from "../utils";
+import { Client } from '../Client';
+import { FetchedUser } from '../Types';
+import { parseUUIDWithDashes } from '../utils';
 
 /** A Manager for Users */
 export default class UserManager {
@@ -25,8 +25,8 @@ export default class UserManager {
 	 * @returns The User (or throws an error if failed)
 	 */
 	public async fetchUUID(uuid: string, force = false) {
-		if (typeof uuid !== "string")
-			throw new Error("UUID must be a valid UUID String");
+		if (typeof uuid !== 'string')
+			throw new Error('UUID must be a valid UUID String');
 
 		uuid = parseUUIDWithDashes(uuid);
 
@@ -69,8 +69,8 @@ export default class UserManager {
 	 * @returns The User (or throws an error if failed)
 	 */
 	public async fetchUsername(username: string, force = false) {
-		if (typeof username !== "string")
-			throw new Error("Username must be a valid string");
+		if (typeof username !== 'string')
+			throw new Error('Username must be a valid string');
 
 		if (!force) {
 			const user = this.users.find((u) => u.username == username);

@@ -1,10 +1,10 @@
-import { Client } from "./Client";
+import { Client } from './Client';
 import {
 	IncomingPacketIDs,
 	IncomingPacketTypes,
 	OutgoingPacketIDs,
-} from "./Packets";
-import { FriendRequest, OfflineUser, OnlineUser, User } from "./Types";
+} from './Packets';
+import { FriendRequest, OfflineUser, OnlineUser, User } from './Types';
 
 export async function handle<T extends keyof IncomingPacketTypes>(
 	client: Client,
@@ -27,7 +27,7 @@ export async function handle<T extends keyof IncomingPacketTypes>(
 					online: false,
 				} as OfflineUser;
 				client.friends.set(rawUser.uuid, player);
-				client.emit("playerUpdate", player);
+				client.emit('playerUpdate', player);
 			}
 			for (const rawUser of data.online) {
 				const player = {
@@ -36,12 +36,12 @@ export async function handle<T extends keyof IncomingPacketTypes>(
 					offlineSince: 0,
 					online: true,
 					version: rawUser.version,
-					server: rawUser.server || "In Menus",
+					server: rawUser.server || 'In Menus',
 					messages: [],
 					lcUser: null,
 				} as OnlineUser;
 				client.friends.set(rawUser.uuid, player);
-				client.emit("playerUpdate", player);
+				client.emit('playerUpdate', player);
 			}
 			client.clientConsole._setEnabled(data.consoleAccess ?? false);
 			client.friendRequestsEnabled = data.requestsEnabled;
@@ -55,7 +55,7 @@ export async function handle<T extends keyof IncomingPacketTypes>(
 					offlineSince: 0,
 					online: true,
 					version: data.version,
-					server: data.server || "In Menus",
+					server: data.server || 'In Menus',
 					messages: [],
 					lcUser: null,
 				} as OnlineUser;
@@ -68,12 +68,12 @@ export async function handle<T extends keyof IncomingPacketTypes>(
 				} as OfflineUser;
 			}
 			client.friends.set(data.uuid, player);
-			client.emit("playerUpdate", player);
+			client.emit('playerUpdate', player);
 			break;
 		case IncomingPacketIDs.JoinServer:
 			if (client.friends.get(data.uuid).online)
 				(client.friends.get(data.uuid) as OnlineUser).server =
-					data.server || "In Menus";
+					data.server || 'In Menus';
 			else {
 				client.friends.set(data.uuid, {
 					uuid: data.uuid,
@@ -81,12 +81,12 @@ export async function handle<T extends keyof IncomingPacketTypes>(
 					offlineSince: 0,
 					online: true,
 					version: null,
-					server: "In Menus",
+					server: 'In Menus',
 					messages: [],
 					lcUser: null,
 				} as OnlineUser);
 			}
-			client.emit("playerUpdate", client.friends.get(data.uuid));
+			client.emit('playerUpdate', client.friends.get(data.uuid));
 			break;
 		case IncomingPacketIDs.PlayerInfo:
 			if (data.uuid == client.uuidWithDashes) client.user = data;
@@ -100,7 +100,7 @@ export async function handle<T extends keyof IncomingPacketTypes>(
 						offlineSince: 0,
 						online: true,
 						version: null,
-						server: "In Menus",
+						server: 'In Menus',
 						messages: [],
 						lcUser: data,
 					} as OnlineUser);
@@ -111,12 +111,12 @@ export async function handle<T extends keyof IncomingPacketTypes>(
 						offlineSince: 0,
 						online: true,
 						version: null,
-						server: "In Menus",
+						server: 'In Menus',
 						messages: [],
 						lcUser: data,
 					} as OnlineUser);
 				}
-				client.emit("playerUpdate", client.friends.get(data.uuid));
+				client.emit('playerUpdate', client.friends.get(data.uuid));
 			}
 			break;
 		case IncomingPacketIDs.FriendRequest:
@@ -129,7 +129,7 @@ export async function handle<T extends keyof IncomingPacketTypes>(
 			} as FriendRequest;
 			client.friendRequests.set(data.uuid, req);
 			await client.fetchPlayers(data.uuid);
-			client.emit("friendRequest", req);
+			client.emit('friendRequest', req);
 			break;
 		case IncomingPacketIDs.ReceiveFriendRequest:
 			var req = {
@@ -141,12 +141,12 @@ export async function handle<T extends keyof IncomingPacketTypes>(
 			} as FriendRequest;
 			client.friendRequests.set(data.uuid, req);
 			await client.fetchPlayers(data.uuid);
-			client.emit("friendRequest", req);
+			client.emit('friendRequest', req);
 			break;
 		case IncomingPacketIDs.RemoveFriend:
 			if (!client.friends.has(data.uuid)) break;
 			client._users.set(data.uuid, client.friends.get(data.uuid));
-			client.emit("friendRemove", client.friends.get(data.uuid));
+			client.emit('friendRemove', client.friends.get(data.uuid));
 			client.friends.delete(data.uuid);
 			break;
 		case IncomingPacketIDs.FriendResponse:
@@ -159,10 +159,10 @@ export async function handle<T extends keyof IncomingPacketTypes>(
 				} as OfflineUser;
 				client.friends.set(data.uuid, player);
 				await client.fetchPlayers(data.uuid);
-				client.emit("playerUpdate", player);
+				client.emit('playerUpdate', player);
 			}
 			client.emit(
-				"friendRequestHandled",
+				'friendRequestHandled',
 				client.friendRequests.get(data.uuid),
 				data.accepted
 			);
@@ -179,21 +179,21 @@ export async function handle<T extends keyof IncomingPacketTypes>(
 					outgoing: false,
 				} as FriendRequest;
 				client.friendRequests.set(request.uuid, req);
-				client.emit("friendRequest", req);
+				client.emit('friendRequest', req);
 			});
 			await client.fetchPlayers(data.bulk.map((req) => req.uuid));
 			break;
 		case IncomingPacketIDs.Notification:
-			client.emit("notification", data.title || null, data.message || "");
+			client.emit('notification', data.title || null, data.message || '');
 			break;
 		case IncomingPacketIDs.ForceCrash:
-			client.emit("forceCrash");
+			client.emit('forceCrash');
 			break;
 		case IncomingPacketIDs.ConsoleMessage:
-			client.clientConsole._add(data.message || "");
+			client.clientConsole._add(data.message || '');
 			break;
 		case IncomingPacketIDs.ChatMessage:
-			client.emit("chatMessage", data.message || "");
+			client.emit('chatMessage', data.message || '');
 			break;
 		case IncomingPacketIDs.FriendMessage:
 			if (client.friends.get(data.uuid)?.online) {
@@ -202,9 +202,9 @@ export async function handle<T extends keyof IncomingPacketTypes>(
 					message: data.message,
 				});
 				client.emit(
-					"friendMessage",
+					'friendMessage',
 					client.friends.get(data.uuid),
-					data.message || ""
+					data.message || ''
 				);
 			}
 			break;
@@ -214,20 +214,23 @@ export async function handle<T extends keyof IncomingPacketTypes>(
 		case IncomingPacketIDs.PlayEmote:
 			if (client.users.get(data.uuid)?.online)
 				client.emit(
-					"playEmote",
+					'playEmote',
 					client.users.get(data.uuid) as OnlineUser,
 					data.id,
 					data.metadata
 				);
 			break;
+
 		case IncomingPacketIDs.UpdatePlusColors:
+		case IncomingPacketIDs.ClientBan:
 			// TODO: Handle
 			break;
+
 		default:
 			client.logger.warn(
 				`---------------------------------\nRECIEVED UN-HANDLED PACKET: ${id}\n\n`,
 				data,
-				"\n---------------------------------"
+				'\n---------------------------------'
 			);
 			break;
 	}

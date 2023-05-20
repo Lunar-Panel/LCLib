@@ -1,5 +1,5 @@
-import { Client } from "../Client";
-import { OutgoingPacketIDs } from "../Packets";
+import { Client } from '../Client';
+import { OutgoingPacketIDs } from '../Packets';
 
 /** The Console for the Client */
 export default class ClientConsole {
@@ -11,7 +11,7 @@ export default class ClientConsole {
 
 	/** All logs */
 	public logs: {
-		sender: "server" | "client";
+		sender: 'server' | 'client';
 		message: string;
 	}[] = [];
 
@@ -27,8 +27,8 @@ export default class ClientConsole {
 		this.enabled = !!enabled;
 	}
 
-	public _add(message: string = "") {
-		this.logs.push({ sender: "server", message });
+	public _add(message: string = '') {
+		this.logs.push({ sender: 'server', message });
 	}
 
 	/**
@@ -36,7 +36,7 @@ export default class ClientConsole {
 	 * @param message The message
 	 * @returns Whether the console send was successful
 	 */
-	public async write(message: string = "") {
+	public async write(message: string = '') {
 		if (!this.enabled) return false;
 		if (
 			!(await this.client.sendPersistent(
@@ -48,7 +48,7 @@ export default class ClientConsole {
 		)
 			return false;
 		else {
-			this.logs.push({ sender: "client", message });
+			this.logs.push({ sender: 'client', message });
 			return true;
 		}
 	}
