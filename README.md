@@ -1,3 +1,5 @@
+# **WARNING:** This library is stale right now due to a update in Lunar Client's internals, we don't plan on recoding for that update, but we may do a rework for v2 when Lunar v3 releases.
+
 # [**LCLib**](https://github.com/TBHGodPro/LCLib)
 
 A library to access the Lunar Client Assets WebSocket easily and quickly, comes with:
@@ -16,7 +18,7 @@ First off, install the package by simply running `npm install lc-lib`. Once it i
 
 ```js
 // ES6
-import Lunar from 'lc-lib';
+import * as Lunar from 'lc-lib';
 
 // CommonJS
 const Lunar = require('lc-lib');
