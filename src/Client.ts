@@ -1,7 +1,7 @@
 import EventEmitter, { once } from 'events';
 import backupFetch from 'node-fetch';
 import TypedEmitter from 'typed-emitter';
-import backupWebSocket from 'ws/index';
+import backupWebSocket from 'ws';
 import ClientConsole from './Classes/ClientConsole';
 import Logger from './Classes/Logger';
 import UserManager from './Classes/UserManager';
@@ -25,7 +25,7 @@ import {
 	User,
 	UserState,
 } from './Types';
-import { handle } from './handle';
+import handle from './handle';
 import {
 	ModStates,
 	fetchUserInfo,

@@ -6,7 +6,7 @@ import {
 } from './Packets';
 import { FriendRequest, OfflineUser, OnlineUser, User } from './Types';
 
-export async function handle<T extends keyof IncomingPacketTypes>(
+export default async function handle<T extends keyof IncomingPacketTypes>(
 	client: Client,
 	id: T,
 	data: any
